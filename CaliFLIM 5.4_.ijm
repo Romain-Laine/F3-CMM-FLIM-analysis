@@ -27,7 +27,8 @@ getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
 if (minute < 10) print("Date: "+year+"-"+month+"-"+dayOfMonth+" Time: "+hour+":0"+minute);
 else print("Date: "+year+"-"+month+"-"+dayOfMonth+" Time: "+hour+":"+minute);
 
-print("------------------------------------------------------------------------------------------------");
+
+print("------------------------------------------------------------------------------------------------");
 print("Developed by Dr. Romain Laine from the Laser Analytics group, University of Cambridge");
 print("http://laser.ceb.cam.ac.uk/");
 print("Contact details: rfl30@cam.ac.uk");
@@ -87,7 +88,8 @@ IRFtype_choice = Dialog.getChoice();
 print("IRF type: "+IRFtype_choice);
 
 if (Binning_Choice == "Global binning") Smoothing_Choice = Smoothing_items[0];  // in case of glabal binning, set automatically the smoothing to None
-
+
+
 print("--------------------------------");
 print("Choice of Data processing");
 print("Smoothing: "+Smoothing_Choice);
@@ -208,7 +210,7 @@ DefaultName = substring(DefaultName, 0, lengthOf(DefaultName)-lengthOf(DataExten
 if (IRFtype_choice == "Scatterer"){
 	Dialog.create(GUI_name+" - IRF shift correction");
 	Dialog.addMessage("----- IRF (Scatterer) settings -----");
-	Dialog.addCheckbox("Estimate IRF shift",false);
+	Dialog.addCheckbox("Estimate IRF shift",true);
 	Dialog.addChoice("IRF shift estimation method", IRF_shift_Methods);
 	Dialog.addMessage("- For calibration using a dataset:");
 	Dialog.addString("Data contains", DefaultName);
@@ -559,7 +561,8 @@ if (CalibrationMethod_choice == "high/low [Ca2+] dataset"){
 	// Tau_min = Tau_min - Tau_IRF_Cal;
 	// Tau_max = Tau_max - Tau_IRF_Cal;
 	
-	} // end of if (CalibrationMethod_choice == Calib_method[1])
+	} // end of 
+if (CalibrationMethod_choice == Calib_method[1])
 
 if(Disp_CaImage == 1 || Disp_CaImage_merged == 1){
 	print("--------------------------------");
@@ -573,9 +576,11 @@ if(Disp_CaImage == 1 || Disp_CaImage_merged == 1){
 
 if (Keep_nonResults == 0){
 	close("*stack*");
-	close("*mask*");}
+	close("*mask*");
+}
 
-// Exit batch mode 
+// Exit batch mode
+ 
 // This allows display of the images obtained so far
 if (LargeBatchMode == false) setBatchMode("exit and display");
 
@@ -585,7 +590,8 @@ if ((Keep_nonResults == 1) && (CalibrationMethod_choice == "high/low [Ca2+] data
 	
 	if (IRFtype_choice != "None"){
 		Plot.setColor("black");
-		Plot.add("line", t_IRF_Calib, IRF_Cal_decay);}
+		Plot.add("line", t_IRF_Calib, IRF_Cal_decay);
+}
 		
 	Plot.setColor("red");
 	Plot.add("line", t,LowCa_decay);
@@ -603,7 +609,8 @@ if (Scale_Ca_Auto == 0){
 		if (Scale_Ca_min < 1) Scale_Ca_min = 1;
 			LogScale_Ca_min = log(Scale_Ca_min) / log(10);
 			LogScale_Ca_max = log(Scale_Ca_max) / log(10);
-			print("Limit of [Ca2+] scale bar (in log10 of uM): "+LogScale_Ca_min+" - "+LogScale_Ca_max);}
+			print("Limit of [Ca2+] scale bar (in log10 of uM): "+LogScale_Ca_min+" - "+LogScale_Ca_max);
+}
 }
 
 
@@ -642,9 +649,11 @@ t0 = getTime();
 // Starts batch loop
 // --------------------------------------------------------------------------------------------------------------------------------------
 for (j=0;j<Stack_filename_list.length;j++){
-t_start = getTime();
 
-if (LargeBatchMode == false) setBatchMode(true);  // set it back to true if that was set to "exit and display" cf line 460
+t_start = getTime();
+
+if (LargeBatchMode == false) setBatchMode(true);
+  // set it back to true if that was set to "exit and display" cf line 460
 print("------------------------------------------------------------------------------------------------");
 File_number = j+1;
 
@@ -717,7 +726,8 @@ if (Keep_nonResults == 1) Data_decay = GetDecayData("FLIM stack masked", Remove_
 if (Binning_Choice != Binning_items[5]){
 	// Calculate the lifetime image
 	CalculateAvLifetime("FLIM stack masked",t_window, Remove_bg, BGbin_min, BGbin_max, Tau_IRF, Apply_corr_factor, Apply_CMF3fusion);
-	rename("Average lifetime image");}
+	rename("Average lifetime image");
+}
 
 // In the case of global binning
 if (Binning_Choice == Binning_items[5]){
@@ -740,7 +750,8 @@ if (Binning_Choice == Binning_items[5]){
 //dt = (t2-t1)/1000;
 //print("Time elapsed calculate lifetime: "+dt+" s");
 
-//t1 = getTime();
+
+//t1 = getTime();
 // Now that the lifetime image has been generated, carry on
 //selectWindow("Data lifetime image");
 // run("Subtract...", "value="+Tau_IRF);
@@ -764,7 +775,8 @@ imageCalculator("Divide 32-bit", "Average lifetime image - Masked","FLIM mask");
 
 rename("FLIM lifetime image - raw data (in ns)");
 run("Rainbow RGB");
-//run("16_colors"); // in case we want to use a different LUT 
+//run("16_colors");
+ // in case we want to use a different LUT 
 
 //t1 = getTime();
 if (Scale_Tau_Auto == 1){
@@ -772,11 +784,15 @@ if (Scale_Tau_Auto == 1){
 	getMinAndMax(Scale_Tau_min, Scale_Tau_max);
 	print("Limit of lifetime scale bar (in ns): "+d2s(Scale_Tau_min,2)+" - "+d2s(Scale_Tau_max,2));}
 
-// Set the scale as defined by the user
+
+// Set the scale as defined by the user
 if (Scale_Tau_Auto == 0){
 	selectWindow("FLIM lifetime image - raw data (in ns)");
-	setMinAndMax(Scale_Tau_min, Scale_Tau_max);}
-//t2 = getTime();
+	setMinAndMax(Scale_Tau_min, Scale_Tau_max);
+}
+
+
+//t2 = getTime();
 //dt = (t2-t1)/1000;
 //print("Time elapsed scale image: "+dt+" s");
 
@@ -803,7 +819,8 @@ if(Disp_TauImage == 1 || Disp_TauImage_merged == 1){
 	Border_size = floor(Border*height);
 	//print("Border size: "+Border_size+" pixels");
 	AddScaleBar("FLIM lifetime image - raw data (in ns)", Border_size);
-	rename("FLIM lifetime image");} // end of if(Disp_TauImage == 1 || Disp_TauImage_merged == 1)
+	rename("FLIM lifetime image");
+} // end of if(Disp_TauImage == 1 || Disp_TauImage_merged == 1)
 
 
 if(Disp_TauImage == 1){
@@ -814,7 +831,8 @@ if(Disp_TauImage == 1){
 	else AppendToStack("Lifetime stack - RGB", "FLIM lifetime image");
 }
 	
-if(Disp_TauImage_merged == 1){
+
+if(Disp_TauImage_merged == 1){
 	selectWindow("FLIM total intensity");
 	run("Duplicate...", "title=[FLIM total intensity - mask]");
 	getMinAndMax(min, max);
@@ -865,12 +883,14 @@ if(Disp_CaImage == 1 || Disp_CaImage_merged == 1){
 				if (AnalysisMethod_choice == "Average lifetime") base = kD*(T1-Tau)/(Tau-T2);
 				if (AnalysisMethod_choice == "Fractions") base = kD*(T1/T2)*(T1-Tau)/(Tau-T2);
 				Ca = pow(base, 1/h);}
-			setPixel(x,y,Ca);}}
+			setPixel(x,y,Ca);
+}}
 
 	// Post-processing
 	if (Remove_outliers == 1) {
 	run("Remove Outliers...", "radius=2 threshold=100 which=Dark");
-	run("Remove Outliers...", "radius=2 threshold=100 which=Bright");}
+	run("Remove Outliers...", "radius=2 threshold=100 which=Bright");
+}
 
 	if (Use_log_scale == 0 && Scale_Ca_Auto == 1){
 	selectWindow("FLIM Calcium concentration - raw data (in uM)");
@@ -892,7 +912,8 @@ if(Disp_CaImage == 1 || Disp_CaImage_merged == 1){
 	
 	if (Scale_Ca_Auto == 0){	
 		selectWindow("FLIM Calcium concentration - raw data (in uM)");
-		setMinAndMax(LogScale_Ca_min, LogScale_Ca_max);}}
+		setMinAndMax(LogScale_Ca_min, LogScale_Ca_max);}
+}
 
 	// Measure the statistics
 	selectWindow("FLIM Calcium concentration - raw data (in uM)");
@@ -911,7 +932,8 @@ if(Disp_CaImage == 1 || Disp_CaImage_merged == 1){
 	Border_size = floor(Border*height);
 	//print("Border size: "+Border_size+" pixels");
 	AddScaleBar("FLIM Calcium concentration - raw data (in uM)", Border_size);
-	rename("FLIM Calcium concentration");} //end of the if(Disp_CaImage == 1 || Disp_CaImage_merged == 1){
+	rename("FLIM Calcium concentration");
+} //end of the if(Disp_CaImage == 1 || Disp_CaImage_merged == 1){
 
 
 if(Disp_CaImage == 1){
@@ -950,7 +972,8 @@ if(Disp_CaImage_merged == 1){
 
 
 // The raw data are now saved in the stacks so there is no need to keep it
-close("FLIM lifetime image - raw data (in ns)");
+close("FLIM lifetime image - raw data (in ns)")
+;
 close("FLIM Calcium concentration - raw data (in uM)");
 
 // Close unnecessary images
@@ -986,7 +1009,8 @@ if(Disp_TauImage_merged == 1){
 
 if(Disp_CaImage == 1){
 	selectWindow("FLIM Calcium concentration");
-	rename("CaliFLIM Calcium concentration - "+Short_filename);}
+	rename("CaliFLIM Calcium concentration - "+Short_filename);
+}
 	
 if(Disp_CaImage_merged == 1){
 	selectWindow("FLIM Calcium concentration merged");
@@ -995,14 +1019,18 @@ if(Disp_CaImage_merged == 1){
 
 // Saving the images as selected by the user
 if (Save_SingleImages_on == 1){
-	//creates folder "output"
+	//creates folder "output"
+
 	if(Disp_TauImage == 1) 	SaveImage("CaliFLIM lifetime image - "+Short_filename, Output_dir_SingleImages);
 	if(Disp_TauImage_merged == 1) SaveImage("CaliFLIM lifetime image merged - "+Short_filename, Output_dir_SingleImages);
-	if(Disp_CaImage == 1) SaveImage("CaliFLIM Calcium concentration - "+Short_filename, Output_dir_SingleImages);
-	if(Disp_CaImage_merged == 1) SaveImage("CaliFLIM Calcium concentration merged - "+Short_filename, Output_dir_SingleImages);
-	if(Disp_IntImage == 1) SaveImage("CaliFLIM total intensity - "+Short_filename, Output_dir_SingleImages);}
+	if(Disp_CaImage == 1) SaveImage("CaliFLIM Calcium concentration - "+Short_filename, Output_dir_SingleImages);
 
-if (LargeBatchMode == false) setBatchMode("exit and display");
+	if(Disp_CaImage_merged == 1) SaveImage("CaliFLIM Calcium concentration merged - "+Short_filename, Output_dir_SingleImages);
+	if(Disp_IntImage == 1) SaveImage("CaliFLIM total intensity - "+Short_filename, Output_dir_SingleImages);
+}
+
+
+if (LargeBatchMode == false) setBatchMode("exit and display");
 
 // Plot decays
 if (Keep_nonResults == 1){
@@ -1010,7 +1038,8 @@ if (Keep_nonResults == 1){
 	Plot.setLimits(0, t_window, -0.1, 1.1);
 	if (IRFtype_choice != "None"){
 		Plot.setColor("black");
-		Plot.add("line", t_IRF, IRF_decay);}
+		Plot.add("line", t_IRF, IRF_decay);
+}
 	Plot.setColor("red");
 	Plot.add("line",t, Data_decay);
 	Plot.show();}
@@ -1026,7 +1055,8 @@ print("Time elapsed: "+dt+" s");
 
 
 print("-----------------------------------------------------------");
-tf = getTime();
+
+tf = getTime();
 dt = (tf-t0)/1000; // in seconds
 print("Total time elapsed: "+d2s(dt,1)+" seconds");
 
@@ -1186,7 +1216,8 @@ function GetTimeWindow(filename){
 return t_window;}
 
 
-// ------------------------------------------------------------
+
+// ------------------------------------------------------------
 // Calculate the total intensity and the mask
 function CalculateMask(Image,Thresh_param){
 	selectWindow(Image);
@@ -1219,7 +1250,8 @@ function CalculateMask(Image,Thresh_param){
 	}
 
 // ------------------------------------------------------------
-// Function that may be applied if we decide to apply different masking for the dataset and the calibration files (Tau_min and Tau_max)
+
+// Function that may be applied if we decide to apply different masking for the dataset and the calibration files (Tau_min and Tau_max)
 function CalculateMask2(Image){
 	selectWindow(Image);
 	//getDimensions(width, height, channels, slices, frames);
@@ -1382,7 +1414,8 @@ run("Reciprocal");
 function CalculateTauCMM(Image_stack_name, dt, Tau_irf){
 	
 // Calculate lifetime image
-selectWindow(Image_stack_name);
+selectWindow(Image_stack_name);
+
 getDimensions(width, height, channels, slices, frames);
 //print("Calculating Tau_CMM on "+frames+" frames.");
 
@@ -1392,7 +1425,8 @@ newImage("FLIM t-stack", "32-bit black", width, height, frames);
 for (i=0;i<frames;i++){
 	setSlice(i+1); 
 	t = dt*i;
-	run("Add...", "value=t slice");}
+	run("Add...", "value=t slice");
+}
 
 // Calculate the STd image
 imageCalculator("Multiply create stack", Image_stack_name,"FLIM t-stack");
@@ -1490,7 +1524,8 @@ function AddScaleBar(Image_name, Border_size) {
 }
 
 
-// ------------------------------------------------------------
+
+// ------------------------------------------------------------
 // Function that merges the colored image with the intensity image
 function MergeIntensityImage(Image, Intensity_Image) {
 	selectWindow(Image);
@@ -1526,7 +1561,8 @@ function MergeIntensityImage(Image, Intensity_Image) {
 	}
 
 
-// ------------------------------------------------------------
+
+// ------------------------------------------------------------
 // Function that gets rid of the NaN values in the image by 0
 function GetRidNegative(Image) {
 	newValue = 0;
@@ -1572,12 +1608,15 @@ function Make_data_file_list(dir,Data_name, Extension){
 	for (i=0;i<AllFile_list.length;i++) {
 		sdt_file = endsWith(AllFile_list[i], Extension);
 		contains_name = indexOf(AllFile_list[i], Data_name)>0 || startsWith(AllFile_list[i], Data_name);
-		if (sdt_file && contains_name == true) DataFile_list = Array.concat(DataFile_list, dir + AllFile_list[i]);}
+		if (sdt_file && contains_name == true) DataFile_list = Array.concat(DataFile_list, dir + AllFile_list[i]);
+}
 	
 	// Exit if the file is not found
-	if (lengthOf(DataFile_list) == 0) exit("No files containing *"+Data_name+"*"+Extension+" were found.");
+
+	if (lengthOf(DataFile_list) == 0) exit("No files containing *"+Data_name+"*"+Extension+" were found.");
 	
-return DataFile_list;}
+return DataFile_list;
+}
 
 
 // ------------------------------------------------------------
@@ -1607,7 +1646,8 @@ function RemoveBackgroundFromStack(Image_stack, BGbin_min, BGbin_max){
 }
 
 
-// ------------------------------------------------------------
+
+// ------------------------------------------------------------
 // Get the decay data from the image stack
 function GetDecayData(Stack_name, Remove_bg, BGbin_min, BGbin_max){
 	selectWindow(Stack_name);
