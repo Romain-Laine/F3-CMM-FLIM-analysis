@@ -2,7 +2,7 @@
 // Using Fiji, bioformats need to be supported
 //
 // 2014-01-31
-// Romain Laine rfl30@cam.ac.uk
+// Romain Laine https://github.com/Romain-Laine
 
 Border = 0.4;               // in fraction of the width
 ShiftThresh = 0.01;         // for the estimation of the IRF shift 0.2 = 20% of max
@@ -32,8 +32,8 @@ else print("Date: "+year+"-"+month+"-"+dayOfMonth+" Time: "+hour+":"+minute);
 
 print("------------------------------------------------------------------------------------------------");
 print("Developed by Dr. Romain Laine from the Laser Analytics group, University of Cambridge");
-print("http://laser.ceb.cam.ac.uk/");
-print("Contact details: rfl30@cam.ac.uk");
+print("https://github.com/Romain-Laine");
+print("Twitter handle: @LaineBioImaging");
 
 Extension_type = newArray(2);
 Extension_type[0] = ".sdt";
@@ -690,7 +690,7 @@ getDimensions(width, height, channels, slices, frames);
 //print("Time elapsed openSDTimage: "+dt+" s");
 
 // Obtain the filename without the directory appended 
-StartIndex = lastIndexOf(Stack_filename_list[j], "\\");
+StartIndex = lastIndexOf(Stack_filename_list[j], File.separator);
 EndIndex = indexOf(Stack_filename_list[j], DataExtension);
 Short_filename = substring(Stack_filename_list[j], StartIndex+1, EndIndex);
 
@@ -1241,15 +1241,15 @@ return t_window;}
 
 // ------------------------------------------------------------
 // Calculate the total intensity and the mask
-function CalculateMask(Image,Thresh_param){
-	selectWindow(Image);
+function CalculateMask(ImageName, Thresh_param){
+	selectWindow(ImageName);
 	//getDimensions(width, height, channels, slices, frames);
 	//rename("Intensity image for masking");
 	
-	run("Duplicate...", "title=["+Image+" mask]");
+	run("Duplicate...", "title=["+ImageName+" mask]");
 	run("Gaussian Blur...", "sigma=1");
 	run("Subtract Background...", "rolling=50");
-	GetRidNegative(Image+" mask");
+	GetRidNegative(ImageName+" mask");
 	run("Remove Outliers...", "radius=2 threshold=100 which=Bright");
 	run("Remove Outliers...", "radius=2 threshold=100 which=Dark");
 
@@ -1269,18 +1269,18 @@ function CalculateMask(Image,Thresh_param){
 	setMinAndMax(0, 0);
 	
 	//close("Intensity image for masking");
-	}
+}
 
 // ------------------------------------------------------------
 
 // Function that may be applied if we decide to apply different masking for the dataset and the calibration files (Tau_min and Tau_max)
-function CalculateMask2(Image){
-	selectWindow(Image);
+function CalculateMask2(ImageName){
+	selectWindow(ImageName);
 	//getDimensions(width, height, channels, slices, frames);
 	//run("Z Project...", "start=1 stop="+frames+" projection=[Sum Slices]");
 	//rename("Intensity image for masking");
 
-	run("Duplicate...", "title=["+Image+" mask]");
+	run("Duplicate...", "title=["+ImageName+" mask]");
 	run("Gaussian Blur...", "sigma=2");
 	setAutoThreshold("Default dark");
 	//setAutoThreshold("Minimum dark");
@@ -1300,109 +1300,112 @@ function CalculateAvLifetime(Image_stack, t_window, Remove_bg, BGbin_min, BGbin_
 	getDimensions(width, height, channels, slices, frames);
 	dt = t_window/frames; // dt is the same for all analysis windows T
 
-// Remove the background
-//if (Remove_background == 0) print("Background not removed.");
-if (Remove_bg == 1){
-	RemoveBackgroundFromStack(Image_stack, BGbin_min, BGbin_max);
-	close("Background_stack");
-	close(Image_stack+" - Background_image");
-	//print("Background removed (using bins between bin #"+BGbin_min+" and bin #"+BGbin_max+")");
+	// Remove the background
+	//if (Remove_background == 0) print("Background not removed.");
+	if (Remove_bg == 1){
+		RemoveBackgroundFromStack(Image_stack, BGbin_min, BGbin_max);
+		close("Background_stack");
+		close(Image_stack+" - Background_image");
+		//print("Background removed (using bins between bin #"+BGbin_min+" and bin #"+BGbin_max+")");
 	}
 
-// Calculate the TauCMM image for T=Tmax
-selectWindow(Image_stack);
-run("Duplicate...", "duplicate");
-rename("ImageStack T");
-CalculateTauCMM("ImageStack T", dt, Tau_irf);
-
-// Applying the correction factor
-if (Apply_corr_factor == true){
-	T_corr = t_window - Tau_irf;
-	n_iteration = 10;
-	ApplyCMM_correction("ImageStack T - Lifetime image", T_corr, n_iteration);}
-	
-GetRidNegative("ImageStack T - Lifetime image");
-close("ImageStack T");
-
-if (Apply_CMF3fusion == false){
-	selectWindow("ImageStack T - Lifetime image");
-	rename(Image_stack+" Lifetime image no mask");}
-
-if (Apply_CMF3fusion == true){
-	// Calculate the TauCMM image for T=Tmax/2
-	n_frames_T2 = frames/2;
+	// Calculate the TauCMM image for T=Tmax
 	selectWindow(Image_stack);
 	run("Duplicate...", "duplicate");
-	rename("ImageStack T/2");
-	run("Slice Remover", "first="+n_frames_T2+1+" last="+frames+" increment=1");
-	CalculateTauCMM("ImageStack T/2", dt, Tau_irf);
-
+	rename("ImageStack T");
+	CalculateTauCMM("ImageStack T", dt, Tau_irf);
+	
 	// Applying the correction factor
 	if (Apply_corr_factor == true){
-		T_corr = t_window/2 - Tau_irf;
+		T_corr = t_window - Tau_irf;
 		n_iteration = 10;
-		ApplyCMM_correction("ImageStack T/2 - Lifetime image", T_corr, n_iteration);}
+		ApplyCMM_correction("ImageStack T - Lifetime image", T_corr, n_iteration);}
+		
+	GetRidNegative("ImageStack T - Lifetime image");
+	close("ImageStack T");
+
+	if (Apply_CMF3fusion == false){
+		selectWindow("ImageStack T - Lifetime image");
+		rename(Image_stack+" Lifetime image no mask");}
+
+	if (Apply_CMF3fusion == true){
+		// Calculate the TauCMM image for T=Tmax/2
+		n_frames_T2 = frames/2;
+		selectWindow(Image_stack);
+		run("Duplicate...", "duplicate");
+		rename("ImageStack T/2");
+		run("Slice Remover", "first="+n_frames_T2+1+" last="+frames+" increment=1");
+		CalculateTauCMM("ImageStack T/2", dt, Tau_irf);
 	
-	GetRidNegative("ImageStack T/2 - Lifetime image");
-	close("ImageStack T/2");
-
-	// Calculate the TauCMM image for T=Tmax/4
-	n_frames_T3 = frames/4;
-	selectWindow(Image_stack);
-	run("Duplicate...", "duplicate");
-	rename("ImageStack T/4");
-	run("Slice Remover", "first="+n_frames_T3+1+" last="+frames+" increment=1");
-	CalculateTauCMM("ImageStack T/4", dt, Tau_irf);
-
-	// Applying the correction factor
-	if (Apply_corr_factor == true){
-		T_corr = t_window/4 - Tau_irf;
-		n_iteration = 10;
-		ApplyCMM_correction("ImageStack T/4 - Lifetime image", T_corr, n_iteration);}
+		// Applying the correction factor
+		if (Apply_corr_factor == true){
+			T_corr = t_window/2 - Tau_irf;
+			n_iteration = 10;
+			ApplyCMM_correction("ImageStack T/2 - Lifetime image", T_corr, n_iteration);
+		}
+		
+		GetRidNegative("ImageStack T/2 - Lifetime image");
+		close("ImageStack T/2");
 	
-	GetRidNegative("ImageStack T/4 - Lifetime image");
-	close("ImageStack T/4");
-
-	// calculate the weighting factors and carry out fusion
-	T1 = t_window - Tau_irf;
-	T2 = t_window/2 - Tau_irf;
-	T3 = t_window/4 - Tau_irf;
-
-	// Using T/2 lifetime image as seed 
-	CalculateWeightingImage("ImageStack T/2 - Lifetime image", T1, T2);
-	rename("W12");
-
-	CalculateWeightingImage("ImageStack T/2 - Lifetime image", T2, T3);
-	rename("W23");
-
-	imageCalculator("Multiply create 32-bit", "ImageStack T - Lifetime image","W12");
-	rename("WTau1");
-
-	imageCalculator("Subtract create 32-bit", "W23","W12");
-	rename("WTau2");
-	imageCalculator("Multiply 32-bit", "WTau2", "ImageStack T/2 - Lifetime image");
-
-	selectWindow("W23");
-	run("Duplicate...", "title=WTau3");
-	run("Subtract...", "value=1");
-	run("Multiply...", "value=-1");
-	imageCalculator("Multiply 32-bit", "WTau3", "ImageStack T/4 - Lifetime image");
-
-	// Add them all up
-	imageCalculator("Add 32-bit", "WTau1", "WTau2");
-	imageCalculator("Add 32-bit", "WTau1", "WTau3");
-
-	selectWindow("WTau1");
-	rename(Image_stack+" Lifetime image no mask");
-
-	close("W12");
-	close("W23");
-	close("WTau2");
-	close("WTau3");
-
-	close("ImageStack T - Lifetime image");
-	close("ImageStack T/2 - Lifetime image");
-	close("ImageStack T/4 - Lifetime image");}
+		// Calculate the TauCMM image for T=Tmax/4
+		n_frames_T3 = frames/4;
+		selectWindow(Image_stack);
+		run("Duplicate...", "duplicate");
+		rename("ImageStack T/4");
+		run("Slice Remover", "first="+n_frames_T3+1+" last="+frames+" increment=1");
+		CalculateTauCMM("ImageStack T/4", dt, Tau_irf);
+	
+		// Applying the correction factor
+		if (Apply_corr_factor == true){
+			T_corr = t_window/4 - Tau_irf;
+			n_iteration = 10;
+			ApplyCMM_correction("ImageStack T/4 - Lifetime image", T_corr, n_iteration);
+		}
+		
+		GetRidNegative("ImageStack T/4 - Lifetime image");
+		close("ImageStack T/4");
+	
+		// calculate the weighting factors and carry out fusion
+		T1 = t_window - Tau_irf;
+		T2 = t_window/2 - Tau_irf;
+		T3 = t_window/4 - Tau_irf;
+	
+		// Using T/2 lifetime image as seed 
+		CalculateWeightingImage("ImageStack T/2 - Lifetime image", T1, T2);
+		rename("W12");
+	
+		CalculateWeightingImage("ImageStack T/2 - Lifetime image", T2, T3);
+		rename("W23");
+	
+		imageCalculator("Multiply create 32-bit", "ImageStack T - Lifetime image","W12");
+		rename("WTau1");
+	
+		imageCalculator("Subtract create 32-bit", "W23","W12");
+		rename("WTau2");
+		imageCalculator("Multiply 32-bit", "WTau2", "ImageStack T/2 - Lifetime image");
+	
+		selectWindow("W23");
+		run("Duplicate...", "title=WTau3");
+		run("Subtract...", "value=1");
+		run("Multiply...", "value=-1");
+		imageCalculator("Multiply 32-bit", "WTau3", "ImageStack T/4 - Lifetime image");
+	
+		// Add them all up
+		imageCalculator("Add 32-bit", "WTau1", "WTau2");
+		imageCalculator("Add 32-bit", "WTau1", "WTau3");
+	
+		selectWindow("WTau1");
+		rename(Image_stack+" Lifetime image no mask");
+	
+		close("W12");
+		close("W23");
+		close("WTau2");
+		close("WTau3");
+	
+		close("ImageStack T - Lifetime image");
+		close("ImageStack T/2 - Lifetime image");
+		close("ImageStack T/4 - Lifetime image");
+	}
 
 }
 
@@ -1410,23 +1413,23 @@ if (Apply_CMF3fusion == true){
 // Calculate the weighting image from the TauImage seed using the Tau_cutoff formulae
 function CalculateWeightingImage(LifetimeImage, T1, T2){
 
-//A = 2.832;
-//C = 0.02309;
-
-A = 3.218;
-C = 0.07339;
-Tau_cutoff = sqrt(T1*T2*C/A);
-//print("Calculating the Weightng image for CMF3 using Tau_cutoff= "+Tau_cutoff+ " ns");
-
-selectWindow(LifetimeImage);
-run("Duplicate...", "title=WeightingImage");
-
-run("Subtract...", "value="+Tau_cutoff);
-run("Divide...", "value="+Tau_cutoff);
-run("Multiply...", "value=-20");
-run("Exp");
-run("Add...", "value=1");
-run("Reciprocal");
+	//A = 2.832;
+	//C = 0.02309;
+	
+	A = 3.218;
+	C = 0.07339;
+	Tau_cutoff = sqrt(T1*T2*C/A);
+	//print("Calculating the Weightng image for CMF3 using Tau_cutoff= "+Tau_cutoff+ " ns");
+	
+	selectWindow(LifetimeImage);
+	run("Duplicate...", "title=WeightingImage");
+	
+	run("Subtract...", "value="+Tau_cutoff);
+	run("Divide...", "value="+Tau_cutoff);
+	run("Multiply...", "value=-20");
+	run("Exp");
+	run("Add...", "value=1");
+	run("Reciprocal");
 
 }
 
@@ -1435,49 +1438,49 @@ run("Reciprocal");
 // TauCMM lifetime image
 function CalculateTauCMM(Image_stack_name, dt, Tau_irf){
 	
-// Calculate lifetime image
-selectWindow(Image_stack_name);
-
-getDimensions(width, height, channels, slices, frames);
-//print("Calculating Tau_CMM on "+frames+" frames.");
-
-newImage("FLIM t-stack", "32-bit black", width, height, frames);
-
-// Creates the t image stack varying from 0 to 25 ns - dt (256 bins)
-for (i=0;i<frames;i++){
-	setSlice(i+1); 
-	t = dt*i;
-	run("Add...", "value=t slice");
-}
-
-// Calculate the STd image
-imageCalculator("Multiply create stack", Image_stack_name,"FLIM t-stack");
-rename("FLIM STd image stack");
-run("Z Project...", "start=1 stop="+frames+" projection=[Sum Slices]");
-rename("FLIM STd image");
-
-// Calculate the Sd image
-selectWindow(Image_stack_name);
-run("Z Project...", "start=1 stop="+frames+" projection=[Sum Slices]");
-rename("FLIM Sd image");
-
-// Divide the 2 to obtain the lifetime image
-imageCalculator("Divide create 32-bit", "FLIM STd image","FLIM Sd image");
-rename(Image_stack_name+" - Lifetime image");
-
-// Half-bin correction
-selectWindow(Image_stack_name+" - Lifetime image");
-Half_bin = dt/2;
-run("Add...", "value="+Half_bin);
-
-// Remove IRF lifetime
-selectWindow(Image_stack_name+" - Lifetime image");
-run("Subtract...", "value="+Tau_irf);
-
-close("FLIM STd image stack");
-close("FLIM STd image");
-close("FLIM t-stack");
-close("FLIM Sd image");
+	// Calculate lifetime image
+	selectWindow(Image_stack_name);
+	
+	getDimensions(width, height, channels, slices, frames);
+	//print("Calculating Tau_CMM on "+frames+" frames.");
+	
+	newImage("FLIM t-stack", "32-bit black", width, height, frames);
+	
+	// Creates the t image stack varying from 0 to 25 ns - dt (256 bins)
+	for (i=0;i<frames;i++){
+		setSlice(i+1); 
+		t = dt*i;
+		run("Add...", "value=t slice");
+	}
+	
+	// Calculate the STd image
+	imageCalculator("Multiply create stack", Image_stack_name,"FLIM t-stack");
+	rename("FLIM STd image stack");
+	run("Z Project...", "start=1 stop="+frames+" projection=[Sum Slices]");
+	rename("FLIM STd image");
+	
+	// Calculate the Sd image
+	selectWindow(Image_stack_name);
+	run("Z Project...", "start=1 stop="+frames+" projection=[Sum Slices]");
+	rename("FLIM Sd image");
+	
+	// Divide the 2 to obtain the lifetime image
+	imageCalculator("Divide create 32-bit", "FLIM STd image","FLIM Sd image");
+	rename(Image_stack_name+" - Lifetime image");
+	
+	// Half-bin correction
+	selectWindow(Image_stack_name+" - Lifetime image");
+	Half_bin = dt/2;
+	run("Add...", "value="+Half_bin);
+	
+	// Remove IRF lifetime
+	selectWindow(Image_stack_name+" - Lifetime image");
+	run("Subtract...", "value="+Tau_irf);
+	
+	close("FLIM STd image stack");
+	close("FLIM STd image");
+	close("FLIM t-stack");
+	close("FLIM Sd image");
 
 }
 
@@ -1485,42 +1488,42 @@ close("FLIM Sd image");
 // CMM correction based on iterative calculation
 function ApplyCMM_correction(Filename, T_corr, n_iteration){
 
-//t1 = getTime();
-selectWindow(Filename);
-run("Duplicate...", " ");
-rename("Pre-correction lifetime image");
-
-for (i=0;i<n_iteration;i++){
+	//t1 = getTime();
 	selectWindow(Filename);
-	run("Duplicate...", "title=ExpImage");
-	close(Filename);
+	run("Duplicate...", " ");
+	rename("Pre-correction lifetime image");
 	
-	run("Reciprocal");
-	run("Multiply...", "value="+T_corr);
-	run("Multiply...", "value=-1");
-	run("Exp");
-
-	run("Duplicate...", "title=NumeratorImage");
-	run("Multiply...", "value="+T_corr);
-
-	selectWindow("ExpImage");
-	rename("DenominatorImage");
-	run("Subtract...", "value=1");
-	run("Multiply...", "value=-1");
-	imageCalculator("Divide create 32-bit", "NumeratorImage","DenominatorImage");
-	rename("Lifetime correction image");
-
-	imageCalculator("Add create 32-bit", "Pre-correction lifetime image", "Lifetime correction image");
-	rename(Filename);
-
-	close("Lifetime correction image");
-	close("DenominatorImage");
-	close("NumeratorImage");}
-
-close("Pre-correction lifetime image");
-//t2 = getTime();
-//Duration = (t2-t1)/1000;
-//print("Time elapsed applying correction: "+Duration+" s");
+	for (i=0;i<n_iteration;i++){
+		selectWindow(Filename);
+		run("Duplicate...", "title=ExpImage");
+		close(Filename);
+		
+		run("Reciprocal");
+		run("Multiply...", "value="+T_corr);
+		run("Multiply...", "value=-1");
+		run("Exp");
+	
+		run("Duplicate...", "title=NumeratorImage");
+		run("Multiply...", "value="+T_corr);
+	
+		selectWindow("ExpImage");
+		rename("DenominatorImage");
+		run("Subtract...", "value=1");
+		run("Multiply...", "value=-1");
+		imageCalculator("Divide create 32-bit", "NumeratorImage","DenominatorImage");
+		rename("Lifetime correction image");
+	
+		imageCalculator("Add create 32-bit", "Pre-correction lifetime image", "Lifetime correction image");
+		rename(Filename);
+	
+		close("Lifetime correction image");
+		close("DenominatorImage");
+		close("NumeratorImage");}
+	
+	close("Pre-correction lifetime image");
+	//t2 = getTime();
+	//Duration = (t2-t1)/1000;
+	//print("Time elapsed applying correction: "+Duration+" s");
 
 }
 
@@ -1549,21 +1552,21 @@ function AddScaleBar(Image_name, Border_size) {
 
 // ------------------------------------------------------------
 // Function that merges the colored image with the intensity image
-function MergeIntensityImage(Image, Intensity_Image) {
-	selectWindow(Image);
-	run("Duplicate...", "title=["+Image+" merged]");
+function MergeIntensityImage(Image_name, Intensity_Image) {
+	selectWindow(Image_name);
+	run("Duplicate...", "title=["+Image_name+" merged]");
 	run("RGB Color");
 	run("Split Channels");
 
-	imageCalculator("Multiply create 32-bit", Image+" merged (red)", Intensity_Image);
+	imageCalculator("Multiply create 32-bit", Image_name+" merged (red)", Intensity_Image);
 	rename("Merged red");
 	run("8-bit");
 
-	imageCalculator("Multiply create 32-bit", Image+" merged (green)", Intensity_Image);
+	imageCalculator("Multiply create 32-bit", Image_name+" merged (green)", Intensity_Image);
 	rename("Merged green");
 	run("8-bit");
 
-	imageCalculator("Multiply create 32-bit", Image+" merged (blue)", Intensity_Image);
+	imageCalculator("Multiply create 32-bit", Image_name+" merged (blue)", Intensity_Image);
 	rename("Merged blue");
 	run("8-bit");
 
@@ -1571,26 +1574,26 @@ function MergeIntensityImage(Image, Intensity_Image) {
 	rename("Merged 8-bits");
 
 	run("RGB Color");
-	rename(Image+" merged");
+	rename(Image_name+" merged");
 
 	close("Merged red");
 	close("Merged green");
 	close("Merged blue");
-	close(Image+" merged (red)");
-	close(Image+" merged (green)");
-	close(Image+" merged (blue)");
+	close(Image_name+" merged (red)");
+	close(Image_name+" merged (green)");
+	close(Image_name+" merged (blue)");
 	close("Merged 8-bits");
-	}
+}
 
 
 
 // ------------------------------------------------------------
 // Function that gets rid of the NaN values in the image by 0
-function GetRidNegative(Image) {
+function GetRidNegative(ImageName) {
 	newValue = 0;
 	counter = 0;
 
-	selectWindow(Image);
+	selectWindow(ImageName);
 	for (y = 0; y < getHeight(); y++){
         	for (x = 0; x < getWidth(); x++){
                 	p = getPixel(x,y);
@@ -1608,15 +1611,15 @@ function GetRidNegative(Image) {
 
 // ------------------------------------------------------------
 // Save the image in the right folder and name and closes it
-function SaveImage(Image,path){
-	selectWindow(Image);
+function SaveImage(Image_name, path){
+	selectWindow(Image_name);
 	run("Duplicate...", "title=[Save image]");
-	SaveFilename = path+"/"+Image+".png";
+	SaveFilename = path+"/"+Image_name+".png";
 	saveAs("png", SaveFilename);
 	close();
 	print("Saved:");
 	print(SaveFilename);
-	}	
+}	
 
 
 // ------------------------------------------------------------
@@ -1631,13 +1634,13 @@ function Make_data_file_list(dir,Data_name, Extension){
 		sdt_file = endsWith(AllFile_list[i], Extension);
 		contains_name = indexOf(AllFile_list[i], Data_name)>0 || startsWith(AllFile_list[i], Data_name);
 		if (sdt_file && contains_name == true) DataFile_list = Array.concat(DataFile_list, dir + AllFile_list[i]);
-}
+	}
 	
 	// Exit if the file is not found
 
 	if (lengthOf(DataFile_list) == 0) exit("No files containing *"+Data_name+"*"+Extension+" were found.");
 	
-return DataFile_list;
+	return DataFile_list;
 }
 
 
@@ -1697,7 +1700,8 @@ function GetDecayData(Stack_name, Remove_bg, BGbin_min, BGbin_max){
 	for (i=0;i<Z_profile.length;i++) Z_profile[i] = Z_profile[i]/max;
 	close("Sum_stack");
 
-return Z_profile;}
+	return Z_profile;
+}
 
 
 // ------------------------------------------------------------
@@ -1721,7 +1725,8 @@ function GetTimeThresh(Time,Decay,Thresh){
     b = Decay[i] - a*Time[i];
     T_thresh = (Thresh - b)/a;}
 
-return T_thresh;}
+	return T_thresh;
+}
 
 
 // ------------------------------------------------------------
@@ -1737,7 +1742,8 @@ function Shift_correction_factor(t_IRF, IRF_decay){
 	Shift_correction = 0.4*Fit.p(2)+0.02;
 	print("Shift correction: "+d2s(Shift_correction,3)+" ns");
 	  
-return Shift_correction;}
+	return Shift_correction;
+}
 
 
 // ------------------------------------------------------------
@@ -1749,7 +1755,8 @@ function TimeThresh2Bin_position(T_thresh, t_window, frames){
 	else Bin_position = 0;
 	print("Bin position of Edge threshold: "+Bin_position);
 
-return Bin_position;}
+	return Bin_position;
+}
 
 // ------------------------------------------------------------
 // This function gets the position of the background estimation by calculating the derivative of the curve and using a threshold
@@ -1766,7 +1773,8 @@ function GetBackgroundPosition(Decay){
 	Position = floor(0.9*Position) - 2;
 	print("Background bins from 1 to "+Position);
 	
-return Position;}
+	return Position;
+}
 
 // ------------------------------------------------------------
 // This function appends an image at the end of a stack
@@ -1861,11 +1869,11 @@ function ArrangeWindows(Disp_IntImage, Disp_TauImage, Disp_TauImage_merged, Disp
 
 function FindPositionOfMaximum(t, Decay) {
 
-RankedPositions = Array.rankPositions(Decay);
-RankedPositions = Array.reverse(RankedPositions);
-t_max = t[RankedPositions[0]];
-
-return t_max	
+	RankedPositions = Array.rankPositions(Decay);
+	RankedPositions = Array.reverse(RankedPositions);
+	t_max = t[RankedPositions[0]];
+	
+	return t_max	
 }
 
 
